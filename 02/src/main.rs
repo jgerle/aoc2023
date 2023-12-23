@@ -10,12 +10,12 @@ fn main() {
     // open file and read line by line - file must exist in the current path
     if let Ok(lines) = read_lines(file) {
         // Consumes the iterator, returns an (Optional) String
-        for line in lines {
+        lines.for_each(|line| {
             if let Ok(game_raw) = line {
                 let game = process_line_with_game(&game_raw);
                 println!("{:?}", game);
             }
-        }
+        });
     }
 }
 
@@ -65,7 +65,7 @@ fn process_line_with_game(line: &String) -> Option<Game> {
 
     let game = Game {
         id: get_id(parts_iter.next().expect("get game id from line")),
-        cubesets: get_cubesets(parts_iter.next()),
+        cubesets: get_cubesets(parts_iter.next().unwrap()),
     };
 
     // TODO: process game cube sets
@@ -90,29 +90,24 @@ fn get_id(id_part: &str) -> u32 {
 
 /// Extract cube sets from String and have them parsed into array of structs
 /* Input data: " 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green" */
-fn get_cubesets(cubesets_part: Option<&str>) -> Option<Vec<Cubeset>> {
-    match cubesets_part {
-        Some(cubeset_line) => {
-            let mut cubesets: Vec<Cubeset> = Vec::new();
-            let input_parts = cubeset_line.split("; ").collect::<Vec<&str>>();
+fn get_cubesets(cubesets_part: &str) -> Option<Vec<Cubeset>> {
+    let mut cubesets: Vec<Cubeset> = Vec::new();
+    let input_parts = cubesets_part.split("; ").collect::<Vec<&str>>();
 
-            if input_parts.len() > 0 {
-                for cubeset_raw in input_parts.iter() {
-                    match get_cubeset(cubeset_raw) {
-                        Some(cubeset) => {
-                            cubesets.push(cubeset);
-                        }
-                        None => {
-                            panic!("No cubeset found! Malformed input?")
-                        }
-                    }
+    if input_parts.len() > 0 {
+        input_parts
+            .iter()
+            .for_each(|cubeset_raw| match get_cubeset(cubeset_raw) {
+                Some(cubeset) => {
+                    cubesets.push(cubeset);
                 }
-                return Some(cubesets);
-            } else {
-                return None;
-            }
-        }
-        None => return None,
+                None => {
+                    panic!("No cubeset found! Malformed input?")
+                }
+            });
+        return Some(cubesets);
+    } else {
+        return None;
     }
 }
 
@@ -121,10 +116,14 @@ fn get_cubeset(cubeset_raw: &str) -> Option<Cubeset> {
     let cubeset_parts = cubeset_raw.split(", ").collect::<Vec<&str>>(); // elements be like "6 red", "1 blue" and "3 green"
     let cubeset_parts_iter = cubeset_parts.iter();
     let mut cubeset = Cubeset::default();
-    for cubeset_raw in cubeset_parts_iter {
+    cubeset_parts_iter.for_each(|cubeset_raw| {
         let cubeset_raw_parts = cubeset_raw.split(" ").collect::<Vec<&str>>(); // now we have e.g. "6" and "red"
         let mut cubeset_raw_parts_iter = cubeset_raw_parts.iter();
-        let cubeset_raw_part_count = cubeset_raw_parts_iter.next()?.parse::<u32>().unwrap();
+        let cubeset_raw_part_count = cubeset_raw_parts_iter
+            .next()
+            .unwrap()
+            .parse::<u32>()
+            .unwrap();
         let cubeset_raw_part_color = cubeset_raw_parts_iter.next().unwrap().to_string();
         match cubeset_raw_part_color.as_str() {
             "red" => cubeset.red = cubeset_raw_part_count,
@@ -132,7 +131,7 @@ fn get_cubeset(cubeset_raw: &str) -> Option<Cubeset> {
             "green" => cubeset.green = cubeset_raw_part_count,
             _ => panic!("Unknown color found!"),
         }
-    }
+    });
     //let trimmed_input = cubeset_parts.trim();
     return Some(cubeset);
 }
