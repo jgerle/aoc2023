@@ -3,8 +3,12 @@ use std::io::{self, BufRead};
 use std::path::Path;
 
 fn main() {
+    // process command line args
+    // see https://rust-cli.github.io/book/tutorial/cli-args.html for better ways ¯\_(ツ)_/¯
+    let file = std::env::args().nth(1).expect("ERROR: no filename given");
+
     // open file and read line by line - file must exist in the current path
-    if let Ok(lines) = read_lines("./sample.txt") {
+    if let Ok(lines) = read_lines(file) {
         // Consumes the iterator, returns an (Optional) String
         for line in lines {
             if let Ok(game_raw) = line {
