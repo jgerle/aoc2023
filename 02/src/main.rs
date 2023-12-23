@@ -57,14 +57,11 @@ impl Default for Cubeset {
 /* Split the line in a game part and rounds */
 fn process_line_with_game(line: &String) -> Option<Game> {
     // split line by colon to have game meta info and cube sets
-    let parts = line.split(": ").collect::<Vec<&str>>();
-    let mut parts_iter = parts.iter();
-    let id_part = parts_iter.next();
-    let cubesets_part = parts_iter.next();
+    let mut parts_iter = line.split(": ").collect::<Vec<&str>>().into_iter();
 
     let game = Game {
-        id: get_id(id_part),
-        cubesets: get_cubesets(cubesets_part),
+        id: get_id(parts_iter.next().expect("get game id from line")),
+        cubesets: get_cubesets(parts_iter.next()),
     };
 
     // TODO: process game cube sets
@@ -72,30 +69,24 @@ fn process_line_with_game(line: &String) -> Option<Game> {
 }
 
 /* Get the id of a game from a line */
-fn get_id(id_part: Option<&&str>) -> u32 {
-    match id_part {
-        Some(id_part) => {
-            // split by whitespace, get the second part
-            let id_part_string = id_part.to_string();
-            let id_part_parts = id_part_string.split(" ").collect::<Vec<&str>>();
+fn get_id(id_part: &str) -> u32 {
+    // split by whitespace, get the second part
+    let id_part_string = id_part.to_string();
+    let id_part_parts = id_part_string.split(" ").collect::<Vec<&str>>();
 
-            let id_part_parts_iter = id_part_parts.iter();
-            let mut id_skip_iter = id_part_parts_iter.skip(1);
-            let id = id_skip_iter.next();
+    let id_part_parts_iter = id_part_parts.iter();
+    let mut id_skip_iter = id_part_parts_iter.skip(1);
+    let id = id_skip_iter.next();
 
-            match id {
-                Some(id) => id.parse::<u32>().expect("Part should contain id"),
-                None => panic!("No id found in id_part"),
-            }
-        }
-        None => panic!("No id part found in input"),
+    match id {
+        Some(id) => id.parse::<u32>().expect("Part should contain id"),
+        None => panic!("No id found in id_part"),
     }
-    //;
 }
 
 /// Extract cube sets from String and have them parsed into array of structs
 /* Input data: " 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green" */
-fn get_cubesets(cubesets_part: Option<&&str>) -> Option<Vec<Cubeset>> {
+fn get_cubesets(cubesets_part: Option<&str>) -> Option<Vec<Cubeset>> {
     match cubesets_part {
         Some(cubeset_line) => {
             let mut cubesets: Vec<Cubeset> = Vec::new();
@@ -147,36 +138,25 @@ mod tests {
     use super::*;
     #[test]
     fn get_id_five() {
-        let value = "Game 5";
-        let input: Option<&&str> = Some(&value);
-        let five: u32 = get_id(input);
-
-        assert_eq!(5, five);
+        assert_eq!(5, get_id("Game 5"));
     }
 
     #[test]
     fn get_6red_from_cubeset() {
-        let sampledata = "6 red, 1 blue, 3 green";
-        let cubeset = get_cubeset(sampledata);
-        assert_eq!(6, cubeset.unwrap().red);
+        assert_eq!(6, get_cubeset("6 red, 1 blue, 3 green").unwrap().red);
     }
     #[test]
     fn get_1blue_from_cubeset() {
-        let sampledata = "6 red, 1 blue, 3 green";
-        let cubeset = get_cubeset(sampledata);
-        assert_eq!(1, cubeset.unwrap().blue);
+        assert_eq!(1, get_cubeset("6 red, 1 blue, 3 green").unwrap().blue);
     }
     #[test]
     fn get_3green_from_cubeset() {
-        let sampledata = "6 red, 1 blue, 3 green";
-        let cubeset = get_cubeset(sampledata);
-        assert_eq!(3, cubeset.unwrap().green);
+        assert_eq!(3, get_cubeset("6 red, 1 blue, 3 green").unwrap().green);
     }
 
     #[test]
     fn process_line() {
         let line = String::from("Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green");
-        let game = process_line_with_game(&line);
-        assert_eq!(5, game.unwrap().id);
+        assert_eq!(5, process_line_with_game(&line).unwrap().id);
     }
 }
